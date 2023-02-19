@@ -73,19 +73,19 @@ int main(void) {
     int                 rtn;
     char                rxBuffer[64];
     nrf_t               nrf;
-//    weather_packet_t    pkt;
+    weather_packet_t    pkt;
 
 	nrf.CE 				= NRF24L01_CE_PIN;
 	nrf.spi_device 		= SPI_DEVICE;
-	nrf.spi_channel 	= SPI_CHANNEL;
+	nrf.spi_channel 	    = SPI_CHANNEL;
 	nrf.spi_speed 		= SPI_FREQ;
 	nrf.mode 			= NRF_RX;
-	nrf.channel 		= NRF24L01_CHANNEL;
-	nrf.payload 		= NRF_MAX_PAYLOAD;
-	nrf.pad 			= 32;
+	nrf.channel 		    = NRF24L01_CHANNEL;
+	nrf.payload 		    = NRF_MAX_PAYLOAD;
+	nrf.pad 			    = 32;
 	nrf.address_bytes 	= 5;
 	nrf.crc_bytes 		= 2;
-	nrf.PTX 			= 0;
+	nrf.PTX 			    = 0;
 
     NRF_init(&nrf);
 
@@ -117,13 +117,13 @@ int main(void) {
 
             hexDump(rxBuffer, NRF_MAX_PAYLOAD);
 
-            printf("Got temperature: %s\n", rxBuffer);
-            // memcpy(&pkt, rxBuffer, sizeof(weather_packet_t));
+            // printf("Got temperature: %s\n", rxBuffer);
+            memcpy(&pkt, rxBuffer, sizeof(weather_packet_t));
 
-            // printf("Got weather data:\n");
-            // printf("\tTemperature: %.2f\n", pkt.temperature);
-            // printf("\tPressure:    %.2f\n", pkt.pressure);
-            // printf("\tHumidity:    %.2f\n\n", pkt.humidity);
+            printf("Got weather data:\n");
+            printf("\tTemperature: %.2f\n", pkt.temperature);
+            printf("\tPressure:    %.2f\n", pkt.pressure);
+            printf("\tHumidity:    %.2f\n\n", pkt.humidity);
 
             sleep(1);
         }
