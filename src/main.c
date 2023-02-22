@@ -111,7 +111,7 @@ int main(void) {
 
     int i = 0;
 
-    while (i < 10) {
+    while (i < 60) {
         while (NRF_data_ready(&nrf)) {
             NRF_get_payload(&nrf, rxBuffer);
 
