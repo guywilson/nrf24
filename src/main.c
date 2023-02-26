@@ -117,6 +117,8 @@ void handleSignal(int sigNum) {
 			return;
 	}
 
+    puts("\n");
+    
     NRF_term(&nrf);
     lgClose(lgGetHandle());
     cfgClose(cfgGetHandle());
