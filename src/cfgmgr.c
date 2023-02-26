@@ -254,8 +254,8 @@ void cfgClose(cfg_handle_t * hcfg) {
     hcfg->isInstantiated = false;
 
     for (i = 0;i < hcfg->mapSize;i++) {
-        free(hcfg->map->pszKey);
-        free(hcfg->map->pszValue);
+        free(hcfg->map[i].pszKey);
+        free(hcfg->map[i].pszValue);
     }
     free(hcfg->map);
 }
