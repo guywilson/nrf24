@@ -15,11 +15,7 @@ gcc -Wall -o NRF24 NRF24.c -llgpio
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __APPLE__
-#include "dummy_lgpio.h"
-#else
 #include <lgpio.h>
-#endif
 
 #include "nRF24L01.h"
 #include "NRF24.h"

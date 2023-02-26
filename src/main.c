@@ -5,11 +5,7 @@
 #include <unistd.h>
 #include <ctype.h>
 
-#ifdef __APPLE__
-#include "dummy_lgpio.h"
-#else
 #include <lgpio.h>
-#endif
 
 #include "nRF24L01.h"
 #include "NRF24.h"
