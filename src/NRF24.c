@@ -275,7 +275,7 @@ void NRF_ack_payload(nrf_p nrf, char * data, int count) {
    NRF_xfer(nrf, txBuf, NULL, count+1);
 }
 
-void NRF_set_local_address(nrf_p nrf, char * addr) {
+void NRF_set_local_address(nrf_p nrf, const char * addr) {
    int         i;
    int         n;
    char        txBuf[64];
@@ -295,7 +295,7 @@ void NRF_set_local_address(nrf_p nrf, char * addr) {
    NRF_set_CE(nrf);
 }
 
-void NRF_set_remote_address(nrf_p nrf, char *addr) {
+void NRF_set_remote_address(nrf_p nrf, const char * addr) {
    int         i;
    int         n;
    char        txBuf[64];
@@ -453,7 +453,7 @@ void NRF_init(nrf_p nrf) {
    txBuf[0] = 
          NRF24L01_RF_SETUP_RF_POWER_MEDIUM | 
          NRF24L01_RF_SETUP_RF_LNA_GAIN_ON | 
-         NRF24L01_RF_SETUP_DATA_RATE_1MBPS;
+         nrf->data_rate;
 
    NRF_write_register(nrf, NRF24L01_REG_RF_SETUP, txBuf, 1);
 

@@ -91,6 +91,7 @@ int main(int argc, char ** argv) {
 	bool			    isDumpConfig = false;
 	const char *	    defaultLoggingLevel = "LOG_LEVEL_INFO | LOG_LEVEL_ERROR | LOG_LEVEL_FATAL";
     int                 rtn;
+    int                 dataRate;
     char                rxBuffer[64];
     nrf_t               nrf;
     weather_packet_t    pkt;
@@ -173,13 +174,22 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	nrf.CE 				= NRF24L01_CE_PIN;
-	nrf.spi_device 		= SPI_DEVICE;
-	nrf.spi_channel 	= SPI_CHANNEL;
-	nrf.spi_speed 		= SPI_FREQ;
+    dataRate = strcmp(
+                cfgGetValue(
+                    cfgGetHandle(), 
+                    "radio.baud"), 
+                "2MHz") == 0 ? 
+                NRF24L01_RF_SETUP_DATA_RATE_2MBPS : 
+                NRF24L01_RF_SETUP_DATA_RATE_1MBPS;
+
+	nrf.CE 				= cfgGetValueAsInteger(cfgGetHandle(), "spi.cepin");
+	nrf.spi_device 		= cfgGetValueAsInteger(cfgGetHandle(), "spi.device");
+	nrf.spi_channel 	= cfgGetValueAsInteger(cfgGetHandle(), "spi.channel");
+	nrf.spi_speed 		= cfgGetValueAsInteger(cfgGetHandle(), "spi.freq");
 	nrf.mode 			= NRF_RX;
-	nrf.channel 		= NRF24L01_CHANNEL;
+	nrf.channel 		= cfgGetValueAsInteger(cfgGetHandle(), "radio.channel");
 	nrf.payload 		= NRF_MAX_PAYLOAD;
+    nrf.data_rate       = dataRate;
 	nrf.pad 			= 32;
 	nrf.address_bytes 	= 5;
 	nrf.crc_bytes 		= 2;
@@ -189,8 +199,8 @@ int main(int argc, char ** argv) {
 
     NRF_init(&nrf);
 
-    NRF_set_local_address(&nrf, NRF24L01_LOCAL_ADDRESS);
-    NRF_set_remote_address(&nrf, NRF24L01_REMOTE_ADDRESS);
+    NRF_set_local_address(&nrf, cfgGetValue(cfgGetHandle(), "radio.localaddress"));
+    NRF_set_remote_address(&nrf, cfgGetValue(cfgGetHandle(), "radio.remoteaddress"));
 
 	rtn = NRF_read_register(&nrf, NRF24L01_REG_CONFIG, rxBuffer, 1);
 

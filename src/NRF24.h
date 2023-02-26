@@ -132,6 +132,7 @@ typedef struct {
    int pad;           // value used to pad short messages
    int address_bytes; // RX/TX address length in bytes
    int crc_bytes;     // number of CRC bytes
+   int data_rate;     // Air data rate (1Mbps or 2Mbps)
 
    int spih;
    int chip;
@@ -160,8 +161,8 @@ void        NRF_set_CRC_bytes(nrf_p nrf, int crc_bytes);
 void        NRF_set_fixed_width(char *data, int *count, int width, int pad);
 void        NRF_send(nrf_p nrf, char *data, int count);
 void        NRF_ack_payload(nrf_p nrf, char *data, int count);
-void        NRF_set_local_address(nrf_p nrf, char *addr);
-void        NRF_set_remote_address(nrf_p nrf, char *addr);
+void        NRF_set_local_address(nrf_p nrf, const char * addr);
+void        NRF_set_remote_address(nrf_p nrf, const char * addr);
 int         NRF_data_ready(nrf_p nrf);
 int         NRF_is_sending(nrf_p nrf);
 char *      NRF_get_payload(nrf_p nrf, char *rxBuf);
