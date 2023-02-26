@@ -153,6 +153,8 @@ int main(int argc, char ** argv) {
 
 	if (isDumpConfig) {
         cfgDumpConfig(cfgGetHandle());
+        cfgClose(cfgGetHandle());
+        return 0;
 	}
 
 	if (pszLogFileName != NULL) {
