@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
 
 #include <lgpio.h>
 
+#include "cfgmgr.h"
+#include "logger.h"
+#include "posixthread.h"
+#include "timeutils.h"
 #include "nRF24L01.h"
 #include "NRF24.h"
 
@@ -65,23 +70,120 @@ void hexDump(void * buffer, uint32_t bufferLen)
     printf("  |%s|\n", szASCIIBuf);
 }
 
-int main(void) {
+void printUsage() {
+	printf("\n Usage: wctl [OPTIONS]\n\n");
+	printf("  Options:\n");
+	printf("   -h/?             Print this help\n");
+	printf("   -version         Print the program version\n");
+	printf("   -port device     Serial port device\n");
+	printf("   -baud baudrate   Serial port baud rate\n");
+	printf("   -cfg configfile  Specify the cfg file, default is ./webconfig.cfg\n");
+	printf("   -d               Daemonise this application\n");
+	printf("   -log  filename   Write logs to the file\n");
+	printf("\n");
+}
+
+int main(int argc, char ** argv) {
+	char *			    pszLogFileName = NULL;
+	char *			    pszConfigFileName = NULL;
+	int				    i;
+	bool			    isDaemonised = false;
+	bool			    isDumpConfig = false;
+	const char *	    defaultLoggingLevel = "LOG_LEVEL_INFO | LOG_LEVEL_ERROR | LOG_LEVEL_FATAL";
     int                 rtn;
     char                rxBuffer[64];
     nrf_t               nrf;
     weather_packet_t    pkt;
 
+    tmInitialiseUptimeClock();
+	
+	if (argc > 1) {
+		for (i = 1;i < argc;i++) {
+			if (argv[i][0] == '-') {
+				if (argv[i][1] == 'd') {
+					isDaemonised = true;
+				}
+				else if (strcmp(&argv[i][1], "log") == 0) {
+					pszLogFileName = strdup(&argv[++i][0]);
+				}
+				else if (strcmp(&argv[i][1], "cfg") == 0) {
+					pszConfigFileName = strdup(&argv[++i][0]);
+				}
+				else if (strcmp(&argv[i][1], "-dump-config") == 0) {
+					isDumpConfig = true;
+				}
+				else if (argv[i][1] == 'h' || argv[i][1] == '?') {
+					printUsage();
+					return 0;
+				}
+				else if (strcmp(&argv[i][1], "version") == 0) {
+//					printf("%s Version: [wctl], Build date: [%s]\n\n", getVersion(), getBuildDate());
+					return 0;
+				}
+				else {
+					printf("Unknown argument '%s'", &argv[i][0]);
+					printUsage();
+					return 0;
+				}
+			}
+		}
+	}
+	else {
+		printUsage();
+		return -1;
+	}
+
+	if (isDaemonised) {
+//		daemonise();
+	}
+
+    rtn = cfgOpen(pszConfigFileName);
+
+    if (rtn) {
+		fprintf(stderr, "Could not read config file: '%s'\n", pszConfigFileName);
+		fprintf(stderr, "Aborting!\n\n");
+		fflush(stderr);
+		exit(-1);
+    }
+	
+	if (pszConfigFileName != NULL) {
+		free(pszConfigFileName);
+	}
+
+	if (isDumpConfig) {
+        cfgDumpConfig(cfgGetHandle());
+	}
+
+	if (pszLogFileName != NULL) {
+        lgOpen(pszLogFileName, defaultLoggingLevel);
+		free(pszLogFileName);
+	}
+	else {
+		const char * filename = cfgGetValue(cfgGetHandle(), "log.filename");
+		const char * level = cfgGetValue(cfgGetHandle(), "log.level");
+
+		if (strlen(filename) == 0 && strlen(level) == 0) {
+			lgOpenStdout(defaultLoggingLevel);
+		}
+		else if (strlen(level) == 0) {
+            lgOpen(filename, defaultLoggingLevel);
+		}
+		else {
+            lgOpen(filename, level);
+		}
+	}
+
 	nrf.CE 				= NRF24L01_CE_PIN;
 	nrf.spi_device 		= SPI_DEVICE;
-	nrf.spi_channel 	    = SPI_CHANNEL;
+	nrf.spi_channel 	= SPI_CHANNEL;
 	nrf.spi_speed 		= SPI_FREQ;
 	nrf.mode 			= NRF_RX;
-	nrf.channel 		    = NRF24L01_CHANNEL;
-	nrf.payload 		    = NRF_MAX_PAYLOAD;
-	nrf.pad 			    = 32;
+	nrf.channel 		= NRF24L01_CHANNEL;
+	nrf.payload 		= NRF_MAX_PAYLOAD;
+	nrf.pad 			= 32;
 	nrf.address_bytes 	= 5;
 	nrf.crc_bytes 		= 2;
-	nrf.PTX 			    = 0;
+	nrf.PTX 			= 0;
 
     NRF_init(&nrf);
 
@@ -105,7 +207,7 @@ int main(void) {
         return -1;
     }
 
-    int i = 0;
+    i = 0;
 
     while (i < 60) {
         while (NRF_data_ready(&nrf)) {

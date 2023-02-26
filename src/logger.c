@@ -156,6 +156,24 @@ int lgOpen(const char * pszLogFile, const char * pszLogFlags) {
     return 0;
 }
 
+int lgOpenStdout(const char * pszLogFlags) {
+    log_handle_t * pLog = lgGetHandle();
+
+    if (!pLog->isInstantiated) {
+        pLog->fptr = stdout;
+
+        pLog->logLevel = _logLevel_atoi(pszLogFlags);
+
+        pLog->isInstantiated = true;
+    }
+    else {
+        fprintf(stderr, "Logger already initialised. You should only call lgOpen() once\n");
+        return 0;
+    }
+
+    return 0;
+}
+
 void lgClose(log_handle_t * hlog) {
     fclose(hlog->fptr);
 

@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #ifndef __INCL_CFGMGR
 #define __INCL_CFGMGR
 

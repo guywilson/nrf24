@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #ifndef __INCL_LOGGER
 #define __INCL_LOGGER
 
@@ -19,6 +21,7 @@ typedef struct _log_handle_t        log_handle_t;
 
 log_handle_t *  lgGetHandle();
 int             lgOpen(const char * pszLogFile, const char * pszLogFlags);
+int             lgOpenStdout(const char * pszLogFlags);
 void            lgClose(log_handle_t * hlog);
 void            lgSetLogLevel(log_handle_t * hlog, const char * pszLogLevel);
 int             lgGetLogLevel(log_handle_t * hlog);
