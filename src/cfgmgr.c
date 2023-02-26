@@ -253,3 +253,39 @@ void cfgClose(cfg_handle_t * hcfg) {
     }
     free(hcfg->map);
 }
+
+const char * cfgGetValue(cfg_handle_t * hcfg, const char * key) {
+    int         i;
+
+    for (i = 0;i < hcfg->mapSize;i++) {
+        if (strncmp(hcfg->map[i].pszKey, key, strlen(hcfg->map[i].pszKey)) == 0) {
+            return strdup(hcfg->map[i].pszValue);
+        }
+    }
+
+    return "";
+}
+
+bool cfgGetValueAsBoolean(cfg_handle_t * hcfg, const char * key) {
+    const char *        pszValue;
+
+    pszValue = cfgGetValue(hcfg, key);
+
+    return ((strcmp(pszValue, "yes") == 0 || strcmp(pszValue, "true") == 0 || strcmp(pszValue, "on") == 0) ? true : false);
+}
+
+int cfgGetValueAsInteger(cfg_handle_t * hcfg, const char * key) {
+    const char *        pszValue;
+
+    pszValue = cfgGetValue(hcfg, key);
+
+    return atoi(pszValue);
+}
+
+void cfgDumpConfig(cfg_handle_t * hcfg) {
+    int         i;
+
+    for (i = 0;i < hcfg->mapSize;i++) {
+        printf("'%s' = '%s'\n", hcfg->map[i].pszKey, hcfg->map[i].pszValue);
+    }
+}
