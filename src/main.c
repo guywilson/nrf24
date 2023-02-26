@@ -185,6 +185,8 @@ int main(int argc, char ** argv) {
 	nrf.crc_bytes 		= 2;
 	nrf.PTX 			= 0;
 
+    lgLogInfo(lgGetHandle(), "Opening NRF24L01 device");
+
     NRF_init(&nrf);
 
     NRF_set_local_address(&nrf, NRF24L01_LOCAL_ADDRESS);
@@ -198,7 +200,7 @@ int main(int argc, char ** argv) {
         return -1;
     }
 
-    printf("Read back CONFIG reg: 0x%02X\n", (int)rxBuffer[0]);
+    lgLogInfo(lgGetHandle(), "Read back CONFIG reg: 0x%02X\n", (int)rxBuffer[0]);
 
     if (rxBuffer[0] == 0x00) {
         lgLogError(lgGetHandle(), "Config read back as 0x00, device is probably not plugged in?\n\n");

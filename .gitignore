@@ -3,3 +3,4 @@
 /.vscode
 nrf24
 *.log
+_*.cfg
