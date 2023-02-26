@@ -193,9 +193,7 @@ int main(int argc, char ** argv) {
 	rtn = NRF_read_register(&nrf, NRF24L01_REG_CONFIG, rxBuffer, 1);
 
     if (rtn < 0) {
-        printf(
-            "Failed to transfer SPI data: %s\n", 
-            lguErrorText(rtn));
+        lgLogError(lgGetHandle(), "Failed to transfer SPI data: %s\n", lguErrorText(rtn));
 
         return -1;
     }
@@ -203,7 +201,7 @@ int main(int argc, char ** argv) {
     printf("Read back CONFIG reg: 0x%02X\n", (int)rxBuffer[0]);
 
     if (rxBuffer[0] == 0x00) {
-        printf("Config read back as 0x00, device is probably not plugged in?\n\n");
+        lgLogError(lgGetHandle(), "Config read back as 0x00, device is probably not plugged in?\n\n");
         return -1;
     }
 
@@ -215,13 +213,12 @@ int main(int argc, char ** argv) {
 
             hexDump(rxBuffer, NRF_MAX_PAYLOAD);
 
-            // printf("Got temperature: %s\n", rxBuffer);
             memcpy(&pkt, rxBuffer, sizeof(weather_packet_t));
 
-            printf("Got weather data:\n");
-            printf("\tTemperature: %.2f\n", pkt.temperature);
-            printf("\tPressure:    %.2f\n", pkt.pressure);
-            printf("\tHumidity:    %.2f\n\n", pkt.humidity);
+            lgLogDebug(lgGetHandle(), "Got weather data:\n");
+            lgLogDebug(lgGetHandle(), "\tTemperature: %.2f\n", pkt.temperature);
+            lgLogDebug(lgGetHandle(), "\tPressure:    %.2f\n", pkt.pressure);
+            lgLogDebug(lgGetHandle(), "\tHumidity:    %.2f\n\n", pkt.humidity);
 
             sleep(1);
         }
@@ -232,6 +229,8 @@ int main(int argc, char ** argv) {
     }
 
 	NRF_term(&nrf);
+    lgClose(lgGetHandle());
+    cfgClose(cfgGetHandle());
 
 	return 0;
 }

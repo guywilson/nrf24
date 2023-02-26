@@ -40,6 +40,7 @@ int cfgOpen(const char * pszConfigFileName) {
 	char *			pszConfigLine;
     char *          pszUntrimmedValue;
 	char *			config = NULL;
+    char *          config1 = NULL;
     char *          reference = NULL;
 	char *			pszCfgItem;
     char *          pszCfgItemFile;
@@ -81,7 +82,7 @@ int cfgOpen(const char * pszConfigFileName) {
     ** Retain pointer to original config buffer for 
     ** calling the re-entrant strtok_r() library function...
     */
-    reference = config;
+    reference = &config[0];
 
 	/*
 	** Read in the config file...
@@ -108,12 +109,14 @@ int cfgOpen(const char * pszConfigFileName) {
     */
     config[fileLength] = 0;
 
+    config1 = strdup(config);
+
     pCfg->mapSize = 0;
 
     /*
     ** Count the number of config items...
     */
-	pszConfigLine = strtok_r(config, delimiters, &reference);
+	pszConfigLine = strtok_r(config1, delimiters, &reference);
 
 	while (pszConfigLine != NULL) {
         if (pszConfigLine[0] == '#') {
@@ -129,8 +132,11 @@ int cfgOpen(const char * pszConfigFileName) {
         pCfg->mapSize++;
     }
 
+    free(config1);
+
     /*
-    ** Reset the reference...
+    ** Retain pointer to original config buffer for 
+    ** calling the re-entrant strtok_r() library function...
     */
     reference = &config[0];
 
