@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "posixthread.h"
