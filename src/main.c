@@ -25,14 +25,7 @@ typedef struct {
 }
 weather_packet_t;
 
-#define NRF24L01_CE_PIN                     25
-#define NRF24L01_CHANNEL                    40
-#define SPI_DEVICE                           0
-#define SPI_CHANNEL                          0
-#define SPI_FREQ                       4000000
-
-#define NRF24L01_LOCAL_ADDRESS          "AZ438"
-#define NRF24L01_REMOTE_ADDRESS         "AZ437"
+static nrf_t               nrf;
 
 void hexDump(void * buffer, uint32_t bufferLen)
 {
@@ -83,6 +76,53 @@ void printUsage() {
 	printf("\n");
 }
 
+void handleSignal(int sigNum) {
+	switch (sigNum) {
+		case SIGINT:
+			lgLogStatus(lgGetHandle(), "Detected SIGINT, cleaning up...");
+			break;
+
+		case SIGTERM:
+			lgLogStatus(lgGetHandle(), "Detected SIGTERM, cleaning up...");
+			break;
+
+		case SIGUSR1:
+			/*
+			** We're interpreting this as a request to turn on/off debug logging...
+			*/
+			lgLogStatus(lgGetHandle(), "Detected SIGUSR1...");
+
+			if (lgCheckLogLevel(lgGetHandle(), LOG_LEVEL_INFO)) {
+				int level = lgGetLogLevel(lgGetHandle());
+				level &= ~LOG_LEVEL_INFO;
+				lgSetLogLevel(lgGetHandle(), level);
+			}
+			else {
+				int level = lgGetLogLevel(lgGetHandle());
+				level |= LOG_LEVEL_INFO;
+				lgSetLogLevel(lgGetHandle(), level);
+			}
+
+			if (lgCheckLogLevel(lgGetHandle(), LOG_LEVEL_DEBUG)) {
+				int level = lgGetLogLevel(lgGetHandle());
+				level &= ~LOG_LEVEL_DEBUG;
+				lgSetLogLevel(lgGetHandle(), level);
+			}
+			else {
+				int level = lgGetLogLevel(lgGetHandle());
+				level |= LOG_LEVEL_DEBUG;
+				lgSetLogLevel(lgGetHandle(), level);
+			}
+			return;
+	}
+
+    NRF_term(&nrf);
+    lgClose(lgGetHandle());
+    cfgClose(cfgGetHandle());
+
+    exit(0);
+}
+
 int main(int argc, char ** argv) {
 	char *			    pszLogFileName = NULL;
 	char *			    pszConfigFileName = NULL;
@@ -93,7 +133,6 @@ int main(int argc, char ** argv) {
     int                 rtn;
     int                 dataRate;
     char                rxBuffer[64];
-    nrf_t               nrf;
     weather_packet_t    pkt;
 
     tmInitialiseUptimeClock();
@@ -174,6 +213,29 @@ int main(int argc, char ** argv) {
 		else {
             lgOpen(filename, level);
 		}
+	}
+
+	/*
+	 * Register signal handler for cleanup...
+	 */
+	if (signal(SIGINT, &handleSignal) == SIG_ERR) {
+		lgLogFatal(lgGetHandle(), "Failed to register signal handler for SIGINT");
+		return -1;
+	}
+
+	if (signal(SIGTERM, &handleSignal) == SIG_ERR) {
+		lgLogFatal(lgGetHandle(), "Failed to register signal handler for SIGTERM");
+		return -1;
+	}
+
+	if (signal(SIGUSR1, &handleSignal) == SIG_ERR) {
+		lgLogFatal(lgGetHandle(), "Failed to register signal handler for SIGUSR1");
+		return -1;
+	}
+
+	if (signal(SIGUSR2, &handleSignal) == SIG_ERR) {
+		lgLogFatal(lgGetHandle(), "Failed to register signal handler for SIGUSR2");
+		return -1;
 	}
 
     dataRate = strcmp(

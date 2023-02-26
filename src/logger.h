@@ -23,7 +23,7 @@ log_handle_t *  lgGetHandle();
 int             lgOpen(const char * pszLogFile, const char * pszLogFlags);
 int             lgOpenStdout(const char * pszLogFlags);
 void            lgClose(log_handle_t * hlog);
-void            lgSetLogLevel(log_handle_t * hlog, const char * pszLogLevel);
+void            lgSetLogLevel(log_handle_t * hlog, int logLevel);
 int             lgGetLogLevel(log_handle_t * hlog);
 bool            lgCheckLogLevel(log_handle_t * hlog, int logLevel);
 void            lgNewline(log_handle_t * hlog);

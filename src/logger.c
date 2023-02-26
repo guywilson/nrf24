@@ -181,8 +181,8 @@ void lgClose(log_handle_t * hlog) {
     hlog->isInstantiated = false;
 }
 
-void lgSetLogLevel(log_handle_t * hlog, const char * pszLogLevel) {
-    hlog->logLevel = _logLevel_atoi(pszLogLevel);
+void lgSetLogLevel(log_handle_t * hlog, int logLevel) {
+    hlog->logLevel = logLevel;
 }
 
 int lgGetLogLevel(log_handle_t * hlog) {
