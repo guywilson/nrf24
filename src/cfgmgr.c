@@ -257,9 +257,11 @@ void cfgClose(cfg_handle_t * hcfg) {
 const char * cfgGetValue(cfg_handle_t * hcfg, const char * key) {
     int         i;
 
-    for (i = 0;i < hcfg->mapSize;i++) {
-        if (strncmp(hcfg->map[i].pszKey, key, strlen(hcfg->map[i].pszKey)) == 0) {
-            return strdup(hcfg->map[i].pszValue);
+    if (hcfg->isInstantiated) {
+        for (i = 0;i < hcfg->mapSize;i++) {
+            if (strncmp(hcfg->map[i].pszKey, key, strlen(hcfg->map[i].pszKey)) == 0) {
+                return strdup(hcfg->map[i].pszValue);
+            }
         }
     }
 
@@ -285,7 +287,9 @@ int cfgGetValueAsInteger(cfg_handle_t * hcfg, const char * key) {
 void cfgDumpConfig(cfg_handle_t * hcfg) {
     int         i;
 
-    for (i = 0;i < hcfg->mapSize;i++) {
-        printf("'%s' = '%s'\n", hcfg->map[i].pszKey, hcfg->map[i].pszValue);
+    if (hcfg->isInstantiated) {
+        for (i = 0;i < hcfg->mapSize;i++) {
+            printf("'%s' = '%s'\n", hcfg->map[i].pszKey, hcfg->map[i].pszValue);
+        }
     }
 }
