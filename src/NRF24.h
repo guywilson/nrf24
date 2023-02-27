@@ -134,6 +134,9 @@ typedef struct {
    int crc_bytes;     // number of CRC bytes
    int data_rate;     // Air data rate (1Mbps or 2Mbps)
 
+   const char * local_address;
+   const char * remote_address;
+
    int spih;
    int chip;
    int PTX;
@@ -142,6 +145,17 @@ typedef struct {
 nrf_t;
 
 typedef nrf_t *         nrf_p;
+
+typedef struct {
+    float               temperature;
+    float               pressure;
+    float               humidity;
+    float               rainfall;
+    float               windspeed;
+    uint16_t            windDirection;
+}
+weather_packet_t;
+
 
 int         NRF_xfer(nrf_p nrf, char * txBuf, char * rxBuf, int count);
 int         NRF_read_register(nrf_p nrf, int reg, char * rxBuf, int count);
@@ -171,5 +185,7 @@ void        NRF_flush_rx(nrf_p nrf);
 void        NRF_set_defaults(nrf_p nrf);
 void        NRF_init(nrf_p nrf);
 void        NRF_term(nrf_p nrf);
+
+void *      NRF_listen_thread(void * pParms);
 
 #endif

@@ -8,14 +8,6 @@
 
 #include "posixthread.h"
 
-struct _pxt_handle_t {
-    pthread_t           tid;
-    bool                isRestartable;
-    void *              pThreadParm;
-
-    void *              (* run)(void *);
-};
-
 static void * _threadRunner(void * pParms) {
 	void *			pThreadRtn = NULL;
 	bool			go = true;

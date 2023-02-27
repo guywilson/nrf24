@@ -19,6 +19,8 @@ gcc -Wall -o NRF24 NRF24.c -llgpio
 
 #include "nRF24L01.h"
 #include "NRF24.h"
+#include "logger.h"
+#include "posixthread.h"
 
 /*
    Note that RX and TX addresses must match
@@ -51,7 +53,7 @@ gcc -Wall -o NRF24 NRF24.c -llgpio
 
 
 int NRF_xfer(nrf_p nrf, char * txBuf, char * rxBuf, int count) {
-   return lgSpiXfer(nrf->spih, txBuf, rxBuf, count);
+    return lgSpiXfer(nrf->spih, txBuf, rxBuf, count);
 }
 
 int NRF_read_register(nrf_p nrf, int reg, char * rxBuf, int count) {
@@ -477,77 +479,53 @@ void NRF_term(nrf_p nrf) {
    lgGpiochipClose(nrf->chip);
 }
 
-// int main(int argc, char *argv[])
-// {
-//    int sending;
-//    int count;
-//    double end_time;
-//    char *ver = "l";
-//    char s[256];
-//    nrf_t nrf;
+void * NRF_listen_thread(void * pParms) {
+    int                 rtn;
+    char                rxBuffer[64];
+    weather_packet_t    pkt;
 
-//    if (argc > 1) sending = 1;
-//    else sending = 0;
+    nrf_p nrf = (nrf_p)pParms;
 
-//    NRF_set_defaults(&nrf);
+    lgLogInfo(lgGetHandle(), "Opening NRF24L01 device");
 
-//    nrf.CE = 27;
+    NRF_init(nrf);
 
-//    nrf.payload = NRF_ACK_PAYLOAD;
-//    nrf.pad = '*';
-//    nrf.address_bytes=3;
-//    nrf.crc_bytes = 2;
+    NRF_set_local_address(nrf, nrf->local_address);
+    NRF_set_remote_address(nrf, nrf->remote_address);
 
-//    NRF_init(&nrf);
+	rtn = NRF_read_register(nrf, NRF24L01_REG_CONFIG, rxBuffer, 1);
 
-//    NRF_show_registers(&nrf);
+    if (rtn < 0) {
+        lgLogError(lgGetHandle(), "Failed to transfer SPI data: %s\n", lguErrorText(rtn));
 
-//    end_time = lguTime() + 3600;
+        return NULL;
+    }
 
-//    if (sending)
-//    {
-//       count = 0;
+    lgLogInfo(lgGetHandle(), "Read back CONFIG reg: 0x%02X\n", (int)rxBuffer[0]);
 
-//       NRF_set_local_address(&nrf, "h1");
-//       NRF_set_remote_address(&nrf, "h2");
+    if (rxBuffer[0] == 0x00) {
+        lgLogError(lgGetHandle(), "Config read back as 0x00, device is probably not plugged in?\n\n");
+        return NULL;
+    }
 
-//       while (lguTime() < end_time)
-//       {
-//          //printf("%s\n", NRF_format_FIFO_STATUS(&nrf, s));
-//          //printf("%s\n", NRF_format_OBSERVE_TX(&nrf, s));
+    while (1) {
+        while (NRF_data_ready(nrf)) {
+            NRF_get_payload(nrf, rxBuffer);
 
-//          if (!NRF_is_sending(&nrf))
-//          {
-//             printf("%s> %s\n", ver, test_words[count]);
-//             NRF_send(&nrf, test_words[count], strlen(test_words[count]));
-//             count += 1;
-//             if (count >= number_of_test_words) count = 0;
-//          }
+//            hexDump(rxBuffer, NRF_MAX_PAYLOAD);
 
-//          lguSleep(0.5);
+            memcpy(&pkt, rxBuffer, sizeof(weather_packet_t));
 
-//       }
-//    }
-//    else
-//    {
-//       NRF_set_local_address(&nrf, "h2");
-//       NRF_set_remote_address(&nrf,"h1");
+            lgLogDebug(lgGetHandle(), "Got weather data:\n");
+            lgLogDebug(lgGetHandle(), "\tTemperature: %.2f\n", pkt.temperature);
+            lgLogDebug(lgGetHandle(), "\tPressure:    %.2f\n", pkt.pressure);
+            lgLogDebug(lgGetHandle(), "\tHumidity:    %.2f\n\n", pkt.humidity);
 
-//       while (lguTime() < end_time)
-//       {
-//          //printf("%s\n", NRF_format_FIFO_STATUS(&nrf, s));
-//          //printf("%s\n", NRF_format_OBSERVE_TX(&nrf, s));
+            pxtSleep(seconds, 1);
+        }
 
-//          while (NRF_data_ready(&nrf))
-//          {
-//             printf("%s< %s\n", ver, NRF_get_payload(&nrf, s));
-//          }
-//          lguSleep(0.5);
-//       }
-//    }
+        pxtSleep(seconds, 2);
+    }
 
-//    NRF_term(&nrf);
-
-//    return 0;
-// }
-
+    return NULL;
+}

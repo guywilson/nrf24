@@ -16,16 +16,6 @@
 #include "nRF24L01.h"
 #include "NRF24.h"
 
-typedef struct {
-    float               temperature;
-    float               pressure;
-    float               humidity;
-    float               rainfall;
-    float               windspeed;
-    uint16_t            windDirection;
-}
-weather_packet_t;
-
 static nrf_t               nrf;
 
 void hexDump(void * buffer, uint32_t bufferLen)
@@ -130,13 +120,12 @@ int main(int argc, char ** argv) {
 	char *			    pszLogFileName = NULL;
 	char *			    pszConfigFileName = NULL;
 	int				    i;
+    int                 rtn;
 	bool			    isDaemonised = false;
 	bool			    isDumpConfig = false;
 	const char *	    defaultLoggingLevel = "LOG_LEVEL_INFO | LOG_LEVEL_ERROR | LOG_LEVEL_FATAL";
-    int                 rtn;
     int                 dataRate;
-    char                rxBuffer[64];
-    weather_packet_t    pkt;
+    pxt_handle_t        nrfListenThread;
 
     tmInitialiseUptimeClock();
 	
@@ -257,59 +246,19 @@ int main(int argc, char ** argv) {
 	nrf.channel 		= cfgGetValueAsInteger(cfgGetHandle(), "radio.channel");
 	nrf.payload 		= NRF_MAX_PAYLOAD;
     nrf.data_rate       = dataRate;
+    nrf.local_address   = cfgGetValue(cfgGetHandle(), "radio.localaddress");
+    nrf.remote_address  = cfgGetValue(cfgGetHandle(), "radio.remoteaddress");
 	nrf.pad 			= 32;
 	nrf.address_bytes 	= 5;
 	nrf.crc_bytes 		= 2;
 	nrf.PTX 			= 0;
 
-    lgLogInfo(lgGetHandle(), "Opening NRF24L01 device");
+    pxtCreate(&nrfListenThread, &NRF_listen_thread, false);
+    pxtStart(&nrfListenThread, &nrf);
 
-    NRF_init(&nrf);
-
-    NRF_set_local_address(&nrf, cfgGetValue(cfgGetHandle(), "radio.localaddress"));
-    NRF_set_remote_address(&nrf, cfgGetValue(cfgGetHandle(), "radio.remoteaddress"));
-
-	rtn = NRF_read_register(&nrf, NRF24L01_REG_CONFIG, rxBuffer, 1);
-
-    if (rtn < 0) {
-        lgLogError(lgGetHandle(), "Failed to transfer SPI data: %s\n", lguErrorText(rtn));
-
-        return -1;
+    while (1) {
+        pxtSleep(seconds, 5);
     }
-
-    lgLogInfo(lgGetHandle(), "Read back CONFIG reg: 0x%02X\n", (int)rxBuffer[0]);
-
-    if (rxBuffer[0] == 0x00) {
-        lgLogError(lgGetHandle(), "Config read back as 0x00, device is probably not plugged in?\n\n");
-        return -1;
-    }
-
-    i = 0;
-
-    while (i < 60) {
-        while (NRF_data_ready(&nrf)) {
-            NRF_get_payload(&nrf, rxBuffer);
-
-            hexDump(rxBuffer, NRF_MAX_PAYLOAD);
-
-            memcpy(&pkt, rxBuffer, sizeof(weather_packet_t));
-
-            lgLogDebug(lgGetHandle(), "Got weather data:\n");
-            lgLogDebug(lgGetHandle(), "\tTemperature: %.2f\n", pkt.temperature);
-            lgLogDebug(lgGetHandle(), "\tPressure:    %.2f\n", pkt.pressure);
-            lgLogDebug(lgGetHandle(), "\tHumidity:    %.2f\n\n", pkt.humidity);
-
-            sleep(1);
-        }
-
-        i++;
-
-        sleep(2);
-    }
-
-	NRF_term(&nrf);
-    lgClose(lgGetHandle());
-    cfgClose(cfgGetHandle());
 
 	return 0;
 }

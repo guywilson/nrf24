@@ -1,12 +1,18 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 #ifndef __POSIX_THREAD
 #define __POSIX_THREAD
 
-struct _pxt_handle_t;
+typedef struct {
+    pthread_t           tid;
+    bool                isRestartable;
+    void *              pThreadParm;
 
-typedef struct _pxt_handle_t        pxt_handle_t;
+    void *              (* run)(void *);
+}
+pxt_handle_t;
 
 typedef enum {
     hours,
