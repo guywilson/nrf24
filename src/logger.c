@@ -19,11 +19,10 @@ struct _log_handle_t {
 
     int             logLevel;
     bool            isInstantiated;
-    
-    pthread_mutex_t mutex;
 };
 
 static log_handle_t         _log;
+static pthread_mutex_t      _mutex = PTHREAD_MUTEX_INITIALIZER;
 static char                 _logBuffer[LOG_BUFFER_LENGTH];
 
 
@@ -69,7 +68,7 @@ static int _logLevel_atoi(const char * pszLoggingLevel) {
 int _log_message(log_handle_t * hlog, int logLevel, bool addCR, const char * fmt, va_list args) {
     int         bytesWritten = 0;
 
-	pthread_mutex_lock(&hlog->mutex);
+	pthread_mutex_lock(&_mutex);
 
     if (hlog->logLevel & logLevel) {
         if (strlen(fmt) > MAX_LOG_LENGTH) {
@@ -117,7 +116,7 @@ int _log_message(log_handle_t * hlog, int logLevel, bool addCR, const char * fmt
         _logBuffer[0] = 0;
     }
 
-	pthread_mutex_unlock(&hlog->mutex);
+	pthread_mutex_unlock(&_mutex);
 
     return bytesWritten;
 }
