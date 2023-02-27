@@ -78,34 +78,34 @@ int _log_message(log_handle_t * hlog, int logLevel, bool addCR, const char * fmt
         }
 
         if (addCR) {
-            strncpy(_logBuffer, "[", 1);
+            strncpy(_logBuffer, "[", 2);
             strncat(_logBuffer, tmGetTimeStamp(true), TIMESTAMP_STR_LEN);
-            strncat(_logBuffer, "] ", 2);
+            strncat(_logBuffer, "] ", 3);
 
             switch (logLevel) {
                 case LOG_LEVEL_DEBUG:
-                    strncat(_logBuffer, "[DBG]", 5);
+                    strncat(_logBuffer, "[DBG]", 6);
                     break;
 
                 case LOG_LEVEL_STATUS:
-                    strncat(_logBuffer, "[STA]", 5);
+                    strncat(_logBuffer, "[STA]", 6);
                     break;
 
                 case LOG_LEVEL_INFO:
-                    strncat(_logBuffer, "[INF]", 5);
+                    strncat(_logBuffer, "[INF]", 6);
                     break;
 
                 case LOG_LEVEL_ERROR:
-                    strncat(_logBuffer, "[ERR]", 5);
+                    strncat(_logBuffer, "[ERR]", 6);
                     break;
 
                 case LOG_LEVEL_FATAL:
-                    strncat(_logBuffer, "[FTL]", 5);
+                    strncat(_logBuffer, "[FTL]", 6);
                     break;
             }
 
             strncat(_logBuffer, fmt, (LOG_BUFFER_LENGTH >> 1));
-            strncat(_logBuffer, "\n", 1);
+            strncat(_logBuffer, "\n", 2);
         }
         else {
             strncpy(_logBuffer, fmt, (LOG_BUFFER_LENGTH >> 1));
