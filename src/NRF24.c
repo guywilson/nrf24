@@ -321,7 +321,7 @@ void NRF_set_remote_address(nrf_p nrf, const char * addr) {
 
 int NRF_data_ready(nrf_p nrf) {
    int         status;
-   char        rxBuf[8];
+   char        rxBuf;
 
    status = NRF_get_status(nrf);
 
@@ -329,9 +329,9 @@ int NRF_data_ready(nrf_p nrf) {
       return 1;
    }
 
-   NRF_read_register(nrf, NRF_FIFO_STATUS, rxBuf, 1);
+   NRF_read_register(nrf, NRF_FIFO_STATUS, &rxBuf, 1);
 
-   status = rxBuf[0];
+   status = rxBuf;
 
    return ((status & NRF_FRX_EMPTY) ? 0 : 1);
 }

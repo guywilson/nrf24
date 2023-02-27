@@ -78,37 +78,37 @@ int _log_message(log_handle_t * hlog, int logLevel, bool addCR, const char * fmt
         }
 
         if (addCR) {
-            strncpy(_logBuffer, "[", LOG_BUFFER_LENGTH);
-            strncat(_logBuffer, tmGetTimeStamp(true), LOG_BUFFER_LENGTH);
-            strncat(_logBuffer, "] ", LOG_BUFFER_LENGTH);
+            strncpy(_logBuffer, "[", 1);
+            strncat(_logBuffer, tmGetTimeStamp(true), TIMESTAMP_STR_LEN);
+            strncat(_logBuffer, "] ", 2);
 
             switch (logLevel) {
                 case LOG_LEVEL_DEBUG:
-                    strncat(_logBuffer, "[DBG]", LOG_BUFFER_LENGTH);
+                    strncat(_logBuffer, "[DBG]", 5);
                     break;
 
                 case LOG_LEVEL_STATUS:
-                    strncat(_logBuffer, "[STA]", LOG_BUFFER_LENGTH);
+                    strncat(_logBuffer, "[STA]", 5);
                     break;
 
                 case LOG_LEVEL_INFO:
-                    strncat(_logBuffer, "[INF]", LOG_BUFFER_LENGTH);
+                    strncat(_logBuffer, "[INF]", 5);
                     break;
 
                 case LOG_LEVEL_ERROR:
-                    strncat(_logBuffer, "[ERR]", LOG_BUFFER_LENGTH);
+                    strncat(_logBuffer, "[ERR]", 5);
                     break;
 
                 case LOG_LEVEL_FATAL:
-                    strncat(_logBuffer, "[FTL]", LOG_BUFFER_LENGTH);
+                    strncat(_logBuffer, "[FTL]", 5);
                     break;
             }
 
-            strncat(_logBuffer, fmt, LOG_BUFFER_LENGTH);
-            strncat(_logBuffer, "\n", LOG_BUFFER_LENGTH);
+            strncat(_logBuffer, fmt, (LOG_BUFFER_LENGTH >> 1));
+            strncat(_logBuffer, "\n", 1);
         }
         else {
-            strncpy(_logBuffer, fmt, LOG_BUFFER_LENGTH);
+            strncpy(_logBuffer, fmt, (LOG_BUFFER_LENGTH >> 1));
         }
 
         bytesWritten = vfprintf(hlog->fptr, _logBuffer, args);

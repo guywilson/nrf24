@@ -80,13 +80,14 @@ char * tmGetUptime() {
 }
 
 char * tmGetTimeStamp(bool includeMicroseconds) {
-    static char			szTimeStr[32];
+    static char			szTimeStr[TIMESTAMP_STR_LEN];
 
 	_updateTime();
 
 	if (includeMicroseconds) {
-		sprintf(
+		snprintf(
 			szTimeStr,
+            28,
 			"%d-%02d-%02d %02d:%02d:%02d.%06d",
 			tmGetYear(),
 			tmGetMonth(),
@@ -97,8 +98,9 @@ char * tmGetTimeStamp(bool includeMicroseconds) {
 			tmGetMicrosecond());
 	}
 	else {
-		sprintf(
+		snprintf(
 			szTimeStr,
+            20,
 			"%d-%02d-%02d %02d:%02d:%02d",
 			tmGetYear(),
 			tmGetMonth(),

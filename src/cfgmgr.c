@@ -190,6 +190,7 @@ int cfgOpen(const char * pszConfigFileName) {
                         FILE * f = fopen(pszCfgItemFile, "rt");
 
                         if (f == NULL) {
+                            free(pszUntrimmedValue);
                             fprintf(
                                 stderr, 
                                 "Failed to open cfg item file '%s': %s\n", 
@@ -211,11 +212,28 @@ int cfgOpen(const char * pszConfigFileName) {
                                 propFileLength + 1, 
                                 pCfg->map[itemNum].pszKey);
                             fclose(f);
+                            free(pszUntrimmedValue);
 
                             return -1;
                         }
 
-                        fread(pszCfgItem, propFileLength, 1, f);
+                        bytesRead = fread(pszCfgItem, propFileLength, 1, f);
+
+                        if (bytesRead != propFileLength) {
+                            fclose(f);
+                            free(pszCfgItem);
+                            free(pszUntrimmedValue);
+
+                            fprintf(
+                                stderr, 
+                                "Read %d bytes, but props file '%s' is %ld bytes long\n", 
+                                bytesRead, 
+                                pszCfgItemFile, 
+                                propFileLength);
+
+                            return -1;
+                        }
+
                         pszCfgItem[propFileLength] = 0;
 						
 						/*
