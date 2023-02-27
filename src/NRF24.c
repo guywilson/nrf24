@@ -321,7 +321,7 @@ void NRF_set_remote_address(nrf_p nrf, const char * addr) {
 
 int NRF_data_ready(nrf_p nrf) {
    int         status;
-   char        rxBuf;
+   char        rxBuf = 0;
 
    status = NRF_get_status(nrf);
 
