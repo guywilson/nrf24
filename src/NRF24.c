@@ -21,6 +21,7 @@ gcc -Wall -o NRF24 NRF24.c -llgpio
 #include "NRF24.h"
 #include "logger.h"
 #include "posixthread.h"
+#include "utils.h"
 
 /*
    Note that RX and TX addresses must match
@@ -512,14 +513,14 @@ void * NRF_listen_thread(void * pParms) {
         while (NRF_data_ready(nrf)) {
             NRF_get_payload(nrf, rxBuffer);
 
-//            hexDump(rxBuffer, NRF_MAX_PAYLOAD);
+            hexDump(rxBuffer, NRF_MAX_PAYLOAD);
 
             memcpy(&pkt, rxBuffer, sizeof(weather_packet_t));
 
-            lgLogDebug(lgGetHandle(), "Got weather data:\n");
-            lgLogDebug(lgGetHandle(), "\tTemperature: %.2f\n", pkt.temperature);
-            lgLogDebug(lgGetHandle(), "\tPressure:    %.2f\n", pkt.pressure);
-            lgLogDebug(lgGetHandle(), "\tHumidity:    %.2f\n\n", pkt.humidity);
+            lgLogDebug(lgGetHandle(), "Got weather data:");
+            lgLogDebug(lgGetHandle(), "\tTemperature: %.2f", pkt.temperature);
+            lgLogDebug(lgGetHandle(), "\tPressure:    %.2f", pkt.pressure);
+            lgLogDebug(lgGetHandle(), "\tHumidity:    %.2f", pkt.humidity);
 
             pxtSleep(seconds, 1);
         }

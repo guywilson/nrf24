@@ -8,6 +8,7 @@
 
 #include "posixthread.h"
 
+
 static void * _threadRunner(void * pParms) {
 	void *			pThreadRtn = NULL;
 	bool			go = true;
