@@ -6,6 +6,10 @@
 #                                                                             #
 ###############################################################################
 
+# Version number for WCTL
+MAJOR_VERSION = 0
+MINOR_VERSION = 1
+
 # Directories
 SOURCE = src
 BUILD = build
@@ -15,6 +19,7 @@ DEP = dep
 TARGET = nrf24
 
 # Tools
+VBUILD = vbuild
 C = gcc
 LINKER = gcc
 
@@ -57,6 +62,9 @@ $(DEP)/%.d: ;
 
 install: $(TARGET)
 	cp $(TARGET) /usr/local/bin
+
+version:
+	$(VBUILD) -incfile wctl.ver -template version.c.template -out $(SOURCE)/version.c -major $(MAJOR_VERSION) -minor $(MINOR_VERSION)
 
 clean:
 	rm -r $(BUILD)

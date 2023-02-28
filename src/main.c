@@ -8,6 +8,7 @@
 
 #include <lgpio.h>
 
+#include "version.h"
 #include "cfgmgr.h"
 #include "logger.h"
 #include "posixthread.h"
@@ -112,7 +113,7 @@ int main(int argc, char ** argv) {
 					return 0;
 				}
 				else if (strcmp(&argv[i][1], "version") == 0) {
-//					printf("%s Version: [wctl], Build date: [%s]\n\n", getVersion(), getBuildDate());
+					printf("%s Version: [wctl], Build date: [%s]\n\n", getVersion(), getBuildDate());
 					return 0;
 				}
 				else {
