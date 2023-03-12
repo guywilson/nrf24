@@ -19,6 +19,7 @@ gcc -Wall -o NRF24 NRF24.c -llgpio
 
 #include "nRF24L01.h"
 #include "NRF24.h"
+#include "cfgmgr.h"
 #include "logger.h"
 #include "posixthread.h"
 #include "utils.h"
@@ -51,6 +52,8 @@ gcc -Wall -o NRF24 NRF24.c -llgpio
    |Power Down|  0     |  ---    |  ---   | ---                         |
    +----------+--------+---------+--------+-----------------------------+
 */
+
+static nrf_t            nrf;
 
 
 int NRF_xfer(nrf_p nrf, char * txBuf, char * rxBuf, int count) {
@@ -293,7 +296,7 @@ void NRF_set_local_address(nrf_p nrf, const char * addr) {
 
    NRF_unset_CE(nrf);
 
-   NRF_write_register(nrf, NRF_RX_ADDR_P1, txBuf, n);
+   NRF_write_register(nrf, NRF_RX_ADDR_P0, txBuf, n);
 
    NRF_set_CE(nrf);
 }
@@ -421,53 +424,63 @@ void NRF_set_defaults(nrf_p nrf) {
 }
 
 void NRF_init(nrf_p nrf) {
-   char txBuf[256];
+    char txBuf[256];
 
-   nrf->chip = lgGpiochipOpen(0);
+    nrf->chip = lgGpiochipOpen(0);
 
-   lgGpioClaimOutput(nrf->chip, 0, nrf->CE, 0);
+    lgGpioClaimOutput(nrf->chip, 0, nrf->CE, 0);
 
-   NRF_unset_CE(nrf);
+    NRF_unset_CE(nrf);
 
-   nrf->spih = lgSpiOpen(
-                     nrf->spi_channel, 
-                     nrf->spi_device, 
-                     nrf->spi_speed, 
-                     0);
+    nrf->spih = lgSpiOpen(
+                nrf->spi_channel, 
+                nrf->spi_device, 
+                nrf->spi_speed, 
+                0);
 
-   NRF_set_channel(nrf, nrf->channel);
+    NRF_set_channel(nrf, nrf->channel);
 
-   NRF_set_payload(nrf, nrf->payload);
+    NRF_set_payload(nrf, nrf->payload);
 
-   NRF_set_pad_value(nrf, nrf->pad);
+    NRF_set_pad_value(nrf, nrf->pad);
 
-   NRF_set_address_bytes(nrf, nrf->address_bytes);
+    NRF_set_address_bytes(nrf, nrf->address_bytes);
 
-   NRF_set_CRC_bytes(nrf, nrf->crc_bytes);
+    NRF_set_CRC_bytes(nrf, nrf->crc_bytes);
 
-   nrf->PTX = 0;
+    nrf->PTX = 0;
 
-   NRF_power_down(nrf);
+    NRF_power_down(nrf);
 
-   txBuf[0] = 0x1F;
+    txBuf[0] = 0x2A;
 
-   NRF_write_register(nrf, NRF_SETUP_RETR, txBuf, 1);
+    NRF_write_register(nrf, NRF_SETUP_RETR, txBuf, 1);
 
-   txBuf[0] = 
-         NRF24L01_RF_SETUP_RF_POWER_MEDIUM | 
-         NRF24L01_RF_SETUP_RF_LNA_GAIN_ON | 
-         nrf->data_rate;
+    txBuf[0] = 
+        NRF24L01_RF_SETUP_RF_POWER_MEDIUM | 
+        NRF24L01_RF_SETUP_RF_LNA_GAIN_ON | 
+        nrf->data_rate;
 
-   NRF_write_register(nrf, NRF24L01_REG_RF_SETUP, txBuf, 1);
+    NRF_write_register(nrf, NRF24L01_REG_RF_SETUP, txBuf, 1);
 
-   txBuf[0] = 0x00;
+    txBuf[0] = 0x01;
 
-   NRF_write_register(nrf, NRF_EN_AA, txBuf, 1);
-   
-   NRF_flush_rx(nrf);
-   NRF_flush_tx(nrf);
+    NRF_write_register(nrf, NRF24L01_REG_EN_AA, txBuf, 1);
 
-   NRF_power_up_rx(nrf);
+    txBuf[0] = 
+        NRF24L01_FEATURE_EN_DYN_PAYLOAD_LEN | 
+        NRF24L01_FEATURE_EN_PAYLOAD_WITH_ACK;
+
+    NRF_write_register(nrf, NRF24L01_REG_FEATURE, txBuf, 1);
+
+    txBuf[0] = 0x01;
+
+    NRF_write_register(nrf, NRF24L01_REG_DYNPD, txBuf, 1);
+
+    NRF_flush_rx(nrf);
+    NRF_flush_tx(nrf);
+
+    NRF_power_up_rx(nrf);
 }
 
 void NRF_term(nrf_p nrf) {
@@ -478,6 +491,37 @@ void NRF_term(nrf_p nrf) {
    lgGpioFree(nrf->chip, nrf->CE);
 
    lgGpiochipClose(nrf->chip);
+}
+
+nrf_p getNRFReference() {
+    return &nrf;
+}
+
+void setupNRF24L01() {
+    int                 dataRate;
+
+    dataRate = strcmp(
+                cfgGetValue(
+                    cfgGetHandle(), 
+                    "radio.baud"), 
+                "2MHz") == 0 ? 
+                NRF24L01_RF_SETUP_DATA_RATE_2MBPS : 
+                NRF24L01_RF_SETUP_DATA_RATE_1MBPS;
+
+	nrf.CE 				= cfgGetValueAsInteger(cfgGetHandle(), "spi.cepin");
+	nrf.spi_device 		= cfgGetValueAsInteger(cfgGetHandle(), "spi.device");
+	nrf.spi_channel 	= cfgGetValueAsInteger(cfgGetHandle(), "spi.channel");
+	nrf.spi_speed 		= cfgGetValueAsInteger(cfgGetHandle(), "spi.freq");
+	nrf.mode 			= NRF_RX;
+	nrf.channel 		= cfgGetValueAsInteger(cfgGetHandle(), "radio.channel");
+	nrf.payload 		= NRF_MAX_PAYLOAD;
+    nrf.data_rate       = dataRate;
+    nrf.local_address   = cfgGetValue(cfgGetHandle(), "radio.localaddress");
+    nrf.remote_address  = cfgGetValue(cfgGetHandle(), "radio.remoteaddress");
+	nrf.pad 			= 32;
+	nrf.address_bytes 	= 5;
+	nrf.crc_bytes 		= 2;
+	nrf.PTX 			= 0;
 }
 
 void * NRF_listen_thread(void * pParms) {
@@ -511,6 +555,8 @@ void * NRF_listen_thread(void * pParms) {
 
     while (1) {
         while (NRF_data_ready(nrf)) {
+            //NRF_ack_payload(nrf, data, dataLength);
+
             NRF_get_payload(nrf, rxBuffer);
 
             hexDump(rxBuffer, NRF_MAX_PAYLOAD);
@@ -522,7 +568,7 @@ void * NRF_listen_thread(void * pParms) {
             lgLogDebug(lgGetHandle(), "\tPressure:    %.2f", pkt.pressure);
             lgLogDebug(lgGetHandle(), "\tHumidity:    %.2f", pkt.humidity);
 
-            pxtSleep(seconds, 1);
+            pxtSleep(milliseconds, 250);
         }
 
         pxtSleep(seconds, 2);

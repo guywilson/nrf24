@@ -15,6 +15,7 @@
 #include "timeutils.h"
 #include "nRF24L01.h"
 #include "NRF24.h"
+#include "utils.h"
 
 static nrf_t               nrf;
 
@@ -88,7 +89,6 @@ int main(int argc, char ** argv) {
 	bool			    isDaemonised = false;
 	bool			    isDumpConfig = false;
 	const char *	    defaultLoggingLevel = "LOG_LEVEL_INFO | LOG_LEVEL_ERROR | LOG_LEVEL_FATAL";
-    int                 dataRate;
     pxt_handle_t        nrfListenThread;
 
     tmInitialiseUptimeClock();
@@ -130,7 +130,7 @@ int main(int argc, char ** argv) {
 	}
 
 	if (isDaemonised) {
-//		daemonise();
+		daemonise();
 	}
 
     rtn = cfgOpen(pszConfigFileName);
@@ -194,31 +194,10 @@ int main(int argc, char ** argv) {
 		return -1;
 	}
 
-    dataRate = strcmp(
-                cfgGetValue(
-                    cfgGetHandle(), 
-                    "radio.baud"), 
-                "2MHz") == 0 ? 
-                NRF24L01_RF_SETUP_DATA_RATE_2MBPS : 
-                NRF24L01_RF_SETUP_DATA_RATE_1MBPS;
-
-	nrf.CE 				= cfgGetValueAsInteger(cfgGetHandle(), "spi.cepin");
-	nrf.spi_device 		= cfgGetValueAsInteger(cfgGetHandle(), "spi.device");
-	nrf.spi_channel 	= cfgGetValueAsInteger(cfgGetHandle(), "spi.channel");
-	nrf.spi_speed 		= cfgGetValueAsInteger(cfgGetHandle(), "spi.freq");
-	nrf.mode 			= NRF_RX;
-	nrf.channel 		= cfgGetValueAsInteger(cfgGetHandle(), "radio.channel");
-	nrf.payload 		= NRF_MAX_PAYLOAD;
-    nrf.data_rate       = dataRate;
-    nrf.local_address   = cfgGetValue(cfgGetHandle(), "radio.localaddress");
-    nrf.remote_address  = cfgGetValue(cfgGetHandle(), "radio.remoteaddress");
-	nrf.pad 			= 32;
-	nrf.address_bytes 	= 5;
-	nrf.crc_bytes 		= 2;
-	nrf.PTX 			= 0;
+    setupNRF24L01();
 
     pxtCreate(&nrfListenThread, &NRF_listen_thread, false);
-    pxtStart(&nrfListenThread, &nrf);
+    pxtStart(&nrfListenThread, getNRFReference());
 
     while (1) {
         pxtSleep(seconds, 5);

@@ -186,6 +186,8 @@ void        NRF_set_defaults(nrf_p nrf);
 void        NRF_init(nrf_p nrf);
 void        NRF_term(nrf_p nrf);
 
+nrf_p       getNRFReference();
+void        setupNRF24L01();
 void *      NRF_listen_thread(void * pParms);
 
 #endif
